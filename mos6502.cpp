@@ -61,7 +61,106 @@ void mos6502::clock()
 
   /* Addressing Modes */
 
-  uint8_t mos6502::IMP() //implied
+uint8_t mos6502::IMP() //IMPLIED
+{
+  fetched = a; /* set fetched to contents of accumulator */
+  return 0;
+}
+
+uint8_t mos6502::IMM() //IMMEDIATE
+{
+  addr_abs = pc++; /* data is in next byte */
+  return 0;
+}
+
+uint8_t mos6502::ZP0() //ZERO PAGE ADDRESSING
+{
+  addr_abs = read(pc);
+  pc++;
+  addr_abs &= 0x00FF; /* gets first page */
+  return 0;
+}
+
+uint8_t mos6502::ZPX() //ZERO PAGE ADDRESSING w/ X Register Offset 
+{
+  addr_abs = (read(pc) + x); /* useful for iteration */
+  pc++;
+  addr_abs &= 0x00FF; /* gets first page */
+  return 0;
+}
+
+uint8_t mos6502::ZPY() //ZERO PAGE ADDRESSING w/ Y Register Offset 
+{
+  addr_abs = (read(pc) + y); /* useful for iteration */
+  pc++;
+  addr_abs &= 0x00FF; /* gets first page */
+  return 0;
+}
+
+uint8_t mos6502::ABS() //ABSOLUTE
+{
+  uint16_t low = read(pc);
+  pc++;
+  uint16_t high = read(pc);
+  pc++;
+
+  addr_abs = (high << 8) | low;
+
+  return 0;
+}
+
+uint8_t mos6502::ABX() //ABSOLUTE w/ X Register Offset
+{
+  uint16_t low = read(pc);
+  pc++;
+  uint16_t high = read(pc);
+  pc++;
+
+  addr_abs = (high << 8) | low;
+  addr_abs += x; /* offsets by x */
+
+  if((addr_abs & 0xFF00) != (hi << 8)) /* if offset address is on a different page */
+    return 1; /* alert system of page change */
+  else
+    return 0;
+}
+
+uint8_t mos6502::ABY() //ABSOLUTE w/ Y Register Offset
+{
+  uint16_t low = read(pc);
+  pc++;
+  uint16_t high = read(pc);
+  pc++;
+
+  addr_abs = (high << 8) | low;
+  addr_abs += y; /* offsets by y */
+
+  if((addr_abs & 0xFF00) != (hi << 8)) /* if offset address is on a different page */
+    return 1; /* alert system of page change */
+  else
+    return 0;
+}
+
+uint8_t mos6502::IND() //INDIRECT (basically 6502's pointers)
+{
+  uint16_t ptr_low = read(pc);
+  pc++;
+  uint16_t ptr_high = read(pc);
+  pc++;
+
+  uint16_t ptr = (ptr_high << 8) | ptr_low;
+
+  if(ptr_low == 0x00FF) /* page turn hardware bug simulation */
   {
-    
+    addr_abs = (read(ptr * 0xFF00) << 8) | read(ptr + 0);
+  }else{ /* expected behavior */
+    addr_abs = (read(ptr + 1) << 8) | read(ptr + 0);
   }
+
+  return 0;
+}
+
+uint8_t mos6502::IZX() //Indirect Zero Page w/ X Offset
+{
+  
+}
