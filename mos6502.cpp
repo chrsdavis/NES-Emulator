@@ -162,5 +162,13 @@ uint8_t mos6502::IND() //INDIRECT (basically 6502's pointers)
 
 uint8_t mos6502::IZX() //Indirect Zero Page w/ X Offset
 {
-  
+  uint16_t t = read(pc);
+  pc++;
+
+  uint16_t low = read((uint16_t)(t + (uint16_t)x) & 0x00FF);
+  uint16_t high = read((uint16_t)(t + (uint16_t)x + 1) & 0x00FF);
+
+  addr_abs = (hi << 8) | lo;
+
+  return 0;
 }
