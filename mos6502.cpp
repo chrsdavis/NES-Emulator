@@ -378,7 +378,7 @@ uint8_t::ADC() // Addition
   temp = (uint16_t)a + (uint16_t)fetched + (uint16_t)GetFlag(C); 
 
   SetFlag(C, temp > 255); /* set carry bit if >255 */
-  SetFlag(Z, temp (temp & 0x00FF) == 0); /* if zero */
+  SetFlag(Z, (temp & 0x00FF) == 0); /* if zero */
   SetFlag(N, temp & 0x80); /* negative = last bit */
   
   /* overflow flag bit math */
@@ -390,5 +390,20 @@ uint8_t::ADC() // Addition
 
 uint8_t mos6502::SBC() // Subtraction
 {
-  
+  fetch();
+
+  /* invert the data for negative */
+  uint16_t val = ((uint16_t)fetched) ^ 0x00FF;
+
+  /* overflow flag bit math, same as addition */
+  temp = (uint16_t)a + val + (uint16_t)GetFlag(C);
+
+  SetFlag(V, (~((uint16_t)a ^ (uint16_t)fetched) & ((uint16_t)a ^ (uint16_t)temp)) & 0x0080);
+  SetFlag(C, temp > 255); /* set carry bit if >255 */
+  SetFlag(Z, (temp & 0x00FF) == 0); /* if zero */
+  SetFlag(N, temp & 0x80); /* negative = last bit */
+
+  a = temp & 0x00FF; /* put result in accumulator (8 bit) */
+
+  return 1; /* can have extra clock cycles */
 }
