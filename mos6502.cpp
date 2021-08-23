@@ -369,3 +369,26 @@ uint8_t mos6502::CLV() // Clear Overflow Flag
   SetFlag(V, false);
   return 0;
 }
+
+uint8_t::ADC() // Addition 
+{
+  fetch();
+
+  /* casting into 16 bit range */
+  temp = (uint16_t)a + (uint16_t)fetched + (uint16_t)GetFlag(C); 
+
+  SetFlag(C, temp > 255); /* set carry bit if >255 */
+  SetFlag(Z, temp (temp & 0x00FF) == 0); /* if zero */
+  SetFlag(N, temp & 0x80); /* negative = last bit */
+  
+  /* overflow flag bit math */
+  SetFlag(V, (~((uint16_t)a ^ (uint16_t)fetched) & ((uint16_t)a ^ (uint16_t)temp)) & 0x0080);
+
+  a = temp & 0x00FF; /* put result in accumulator (8 bit) */
+  return 1; /* candidate for extra clock cycles */
+}
+
+uint8_t mos6502::SBC() // Subtraction
+{
+  
+}
