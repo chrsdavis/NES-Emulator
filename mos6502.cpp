@@ -346,3 +346,26 @@ uint8_t mos6502::BVS() //Branch if Overflow Set
   return 0;
 }
 
+uint8_t mos6502::CLC() // Clear Carry bit
+{
+  SetFlag(C, false);
+  return 0;
+}
+
+uint8_t mos6502::CLD() // Clear Decimal Flag
+{
+  SetFlag(D, false);
+  return 0;
+}
+
+uint8_t mos6502::CLI() // Clear Interrupt Flag
+{
+  SetFlag(I, false);
+  return 0;
+}
+
+uint8_t mos6502::CLV() // Clear Overflow Flag
+{
+  SetFlag(V, false);
+  return 0;
+}
