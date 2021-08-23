@@ -58,8 +58,9 @@ void mos6502::clock()
   cycles--;
 }
 
-
+/*_______________________________________*/
   /* Addressing Modes */
+/*_______________________________________*/
 
 uint8_t mos6502::IMP() //IMPLIED
 {
@@ -172,3 +173,176 @@ uint8_t mos6502::IZX() //Indirect Zero Page w/ X Offset
 
   return 0;
 }
+
+uint8_t mos6502::IZX() //Indirect Zero Page w/ Y Offset
+{
+  uint16_t t = read(pc);
+  pc++;
+
+  uint16_t low = read(t & 0x00FF);
+  uint16_t high = read((t+1) & 0x00FF);
+
+  addr_abs = (hi << 8) | lo;
+  addr_abs += y;
+
+  if(addr_abs & 0xFF00) != (high << 8))
+  {
+    return 1;
+  }else{
+    return 0;
+  }
+
+  return 0;
+}
+
+uint8_t mos6502::REL() //Relative
+{
+  addr_rel = read(pc);
+  pc++;
+  if(addr_rel & 0x80) /* see if signed by checking 7th bit */
+    addr_rel |= 0xFF));
+  return 0;
+}
+
+
+/*_______________________________________*/
+  /* Instructions */
+/*_______________________________________*/
+
+uint8_t mos6502::fetch() //fetch memory
+{
+  if(!(lookup[opcode].addrmode == &mos6502::IMP)) /* if it's not implied addressing mode */
+    fetched = read(addr_abs);
+  return fetched;
+}
+
+uint8_t mos6502::AND() //bitwise logical AND
+{
+  fetch(); /* fetch data */
+
+  a = a & fetched;
+  SetFlag(Z, a == 0x00); /* zero flag */
+  SetFlag(N, a & 0x80);  /* negative flag if bit 7 = 1*/
+
+  return 1; /* candidate for additional clock cycles */
+}
+
+uint8_t mos6502::BCS() //Branch if Carry Set 
+{
+  if(GetFlag(C) == 1) /* if carry bit is 1 */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel; /* adr = current + offset */
+
+    if((addr_abs & 0xFF00) != (pc & 0xFF00))
+      cycles++; /* if branch crosses page, add a cycle */
+
+    pc = addr_abs; /* real adr = calculated adr */
+  }
+  return 0;
+}
+
+uint8_t mos6502::BCC() //Branch if Carry Clear
+{
+  if(GetFlag(C) == 0) /* if carry bit is false */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel; /* adr = current + offset */
+
+    if((addr_abs & 0xFF00) != (pc & 0xFF00))
+      cycles++; /* if branch crosses page, add a cycle */
+
+    pc = addr_abs; /* real adr = calculated adr */
+  }
+  return 0;
+}
+
+uint8_t mos6502::BEQ() //Branch if Equal
+{
+  if(GetFlag(Z) == 1) /* if zero bit = 1 */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel;
+
+    if((addr_abs & 0xFF00) != (pc & 0x00FF))
+      cycles++;
+
+    pc = addr_abs; /* pc = pc + offset */
+  }
+}
+
+uint8_t mos6502::BMI() //Branch if Negative
+{
+  if(GetFlag(N) == 1) /* if negative bit is false */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel; /* adr = current + offset */
+
+    if((addr_abs & 0xFF00) != (pc & 0xFF00))
+      cycles++; /* if branch crosses page, add a cycle */
+
+    pc = addr_abs; /* real adr = calculated adr */
+  }
+  return 0;
+}
+
+uint8_t mos6502::BNE() //Branch if Not Equal
+{
+  if(GetFlag(Z) == 0) /* if zero is false */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel; /* adr = current + offset */
+
+    if((addr_abs & 0xFF00) != (pc & 0xFF00))
+      cycles++; /* if branch crosses page, add a cycle */
+
+    pc = addr_abs; /* real adr = calculated adr */
+  }
+  return 0;
+}
+
+uint8_t mos6502::BPL() //Branch if Positive
+{
+  if(GetFlag(N) == 0) /* if negative is false */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel; /* adr = current + offset */
+
+    if((addr_abs & 0xFF00) != (pc & 0xFF00))
+      cycles++; /* if branch crosses page, add a cycle */
+
+    pc = addr_abs; /* real adr = calculated adr */
+  }
+  return 0;
+}
+
+uint8_t mos6502::BVS() //Branch if Overflow Clear
+{
+  if(GetFlag(V) == 0) /* if overflow is false */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel; /* adr = current + offset */
+
+    if((addr_abs & 0xFF00) != (pc & 0xFF00))
+      cycles++; /* if branch crosses page, add a cycle */
+
+    pc = addr_abs; /* real adr = calculated adr */
+  }
+  return 0;
+}
+
+uint8_t mos6502::BVS() //Branch if Overflow Set
+{
+  if(GetFlag(V) == 0) /* if overflow is true */
+  {
+    cycles++;
+    addr_abs = pc + addr_rel; /* adr = current + offset */
+
+    if((addr_abs & 0xFF00) != (pc & 0xFF00))
+      cycles++; /* if branch crosses page, add a cycle */
+
+    pc = addr_abs; /* real adr = calculated adr */
+  }
+  return 0;
+}
+
