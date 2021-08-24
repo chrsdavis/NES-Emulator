@@ -524,5 +524,5 @@ uint8_t mos6502::RTI() // Return from Interrupt
   stkP++;
   pc |=. (uint16_t)read(0x0100 + stkP) << 8;
 
-  return 0; /* no extra cycles */
+  return 0; /* no additional cycles */
 }
