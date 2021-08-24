@@ -1,11 +1,5 @@
 #include "Cartridge.h"
 
-#include <csdtint>
-#include <fstream>
-#include <vector>
-
-#include "Mapper_000.h"
-
 using namespace std;
 
 Cartridge::Cartridge(const string& sFileName) 
