@@ -316,7 +316,7 @@ uint8_t mos6502::BPL() //Branch if Positive
   return 0;
 }
 
-uint8_t mos6502::BVS() //Branch if Overflow Clear
+uint8_t mos6502::BVC() //Branch if Overflow Clear
 {
   if(GetFlag(V) == 0) /* if overflow is false */
   {
@@ -333,7 +333,7 @@ uint8_t mos6502::BVS() //Branch if Overflow Clear
 
 uint8_t mos6502::BVS() //Branch if Overflow Set
 {
-  if(GetFlag(V) == 0) /* if overflow is true */
+  if(GetFlag(V) == 1) /* if overflow is true */
   {
     cycles++;
     addr_abs = pc + addr_rel; /* adr = current + offset */
@@ -406,4 +406,123 @@ uint8_t mos6502::SBC() // Subtraction
   a = temp & 0x00FF; /* put result in accumulator (8 bit) */
 
   return 1; /* can have extra clock cycles */
+}
+
+uint8_t mos6502::PHA() // Push Accumulator to Stack
+{
+  write(0x0100 + stkP, a);
+  /* 6502 stack ptr's base location is at 0x0100 */
+  /* stack has a reserved segment of mem */ 
+  stkP--;
+  /* stkP is current top of stack */
+  return 0;
+}
+
+uint8_t mos6502::PLA() // Pop Accumulator from Stack
+{
+  stkP++; /* pushing puts stkP one behind */
+  a = read(0x0100 + stkP); /* get value from bus */
+  SetFlag(Z, a == 0x00); /* set zero flag */
+  SetFlag(N, a & 0x80); /* set negative flag */
+  return 0; /* no extra clock cycles */
+}
+
+void mos6502::reset() // Resets CPU
+{
+  /* Reset registers */
+  a = 0;
+  x = 0;
+  y = 0;
+  stkP = 0xFD;
+  status = 0x00 | U; /* (U = unused) */
+
+  addr_abs = 0xFFFC; /* address to set program counter to */
+  uint16_t low = read(addr_abs + 0);
+  uint16_t high = read(addr_abs + 1);
+
+  pc = (high << 8) | low; /* set program counter */
+
+  /* reset misc variables */
+  addr_abs = 0x0000;
+  addr_rel = 0x0000;
+  fetched = 0x00;
+
+  cycles = 8; /* resets take time */
+}
+
+void mos6502::irq() // Interruptable Request Signal
+{
+  if(GetFlag(I) == 0) /* if no interrupt flag */
+  {
+    /* write current program counter */
+    /* 16 bits, so needs two writes */
+    write(0x0100 + stkP, (pc >> 8) & 0x00FF);
+    stkP--;
+    write(0x0100 + stkP, pc & 0x00FF);
+    stkP--;
+
+    /* write status register to stack */
+    SetFlag(B, 0);
+    SetFlag(U, 1);
+    SetFlag(I, 1);
+    write(0x0100 + stkP, status);
+    stkP--;
+
+    /* set new, known prog counter location */
+    addr_abs = 0xFFFE;
+    uint16_t low = read(addr_abs + 0);
+    uint16_t high = read(addr_abs + 1);
+    pc = (high << 8) | low;
+
+    cycles = 7; /* interrupts take time */
+  }
+}
+
+void mos6502::nmi() // Non-Maskable IRQ
+{
+  /* [Same as irq, but can't be stopped] */
+
+  /* write current program counter */
+  /* 16 bits, so needs two writes */
+  write(0x0100 + stkP, (pc >> 8) & 0x00FF);
+  stkP--;
+  write(0x0100 + stkP, pc & 0x00FF);
+  stkP--;
+
+  /* write status register to stack */
+  SetFlag(B, 0);
+  SetFlag(U, 1);
+  SetFlag(I, 1);
+  write(0x0100 + stkP, status);
+  stkP--;
+
+  /* set new, known prog counter location */
+  addr_abs = 0xFFFA; /* new value of pc */
+  uint16_t low = read(addr_abs + 0);
+  uint16_t high = read(addr_abs + 1);
+  pc = (high << 8) | low;
+
+  cycles = 8; /* interrupts take time */
+}
+
+
+
+uint8_t mos6502::RTI() // Return from Interrupt
+{
+  /* reverts to pre-interrupt */
+
+  /* reset status register from stack */
+  stkP++;
+  status = read (0x0100 + stkP);
+  status &= ~B;
+  status &= ~U;
+  
+  /* get previous pc from stack */
+  /* 16 bit, so two reads */
+  stkP++;
+  pc = (uint16_t)read(0x0100 + stkP);
+  stkP++;
+  pc |=. (uint16_t)read(0x0100 + stkP) << 8;
+
+  return 0; /* no extra cycles */
 }

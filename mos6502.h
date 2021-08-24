@@ -83,8 +83,8 @@ class mos6502
     void write(uint16_t a, uint8_t d); /* cpu write */
 
     /* Status Register access functions */
-    uint8_t getFlag(FLAGS6502 f);
-    void    setFlag(FLAGS6502 f, bool v);
+    uint8_t GetFlag(FLAGS6502 f);
+    void    SetFlag(FLAGS6502 f, bool v);
 
     struct INSTRUCTION
     {
