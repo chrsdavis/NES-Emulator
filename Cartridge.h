@@ -1,0 +1,29 @@
+//#pragma once
+#include <cstdint>
+using namespace std;
+
+class Cartridge
+{
+  public:
+    Cartridge(const string& sFileName); /* file path */
+    ~Cartridge();
+
+  private:
+    vector<uint8_t> vPRGmem;
+    vector<uint8_t> vCHRmem;
+
+    uint8_t nMapperID = 0; /* which mapper */
+    uint8_t nPRGBanks = 0; /* # of banks of mem */
+    uint8_t nCHRBanks = 0;
+
+  public:
+    /* return bool to check if cart. is handling read/write */
+    
+    /* Main Bus */
+    bool cpuRead(uint16_t addr, uint8_t &data);
+    bool cpuWrite(uint16_t addr, uint8_t data);
+
+    /* PPU Bus */
+    bool ppuRead(uint16_t addr, uint8_t &data);
+    bool ppuWrite(uint16_t addr, uint8_t data);
+};
