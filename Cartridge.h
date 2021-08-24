@@ -16,9 +16,11 @@ class Cartridge
     uint8_t nPRGBanks = 0; /* # of banks of mem */
     uint8_t nCHRBanks = 0;
 
+    shared_ptr<Mapper> mapper_ptr; /* ptr to mapper */
+
   public:
     /* return bool to check if cart. is handling read/write */
-    
+
     /* Main Bus */
     bool cpuRead(uint16_t addr, uint8_t &data);
     bool cpuWrite(uint16_t addr, uint8_t data);

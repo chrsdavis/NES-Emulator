@@ -1,5 +1,11 @@
 #include "Cartridge.h"
 
+#include <csdtint>
+#include <fstream>
+#include <vector>
+
+#include "Mapper_000.h"
+
 using namespace std;
 
 Cartridge::Cartridge(const string& sFileName) 
@@ -57,6 +63,15 @@ Cartridge::Cartridge(const string& sFileName)
       case 2:
         break;
     }
+
+    /* Load correct mapper */
+    switch(nMapperID)
+    {
+      case 0: 
+        mapper_ptr = make_shared<Mapper_000>(nPRGBanks, nCHRBanks);
+        break;
+      
+    }
   
     ifs.close();
     
@@ -70,20 +85,44 @@ Cartridge::~Cartridge()
 
 bool Cartridge::cpuRead(uint16_t addr, uint8_t &data)
 {
-
+  uint32_t mapped_addr = 0;
+  if(pMapper->cpuMapRead(addr, mapped_addr))
+  {
+    data = vPRGmem[mapped_addr];
+    return true; /* cart has handled the adr */
+  }
+  return false;
 }
 
 bool Cartridge::cpuWrite(uint16_t addr, uint8_t data)
 {
-
+  uint32_t mapped_addr = 0;
+  if(pMapper->cpuMapWrite(addr, mapped_addr))
+  {
+    vPRGmem[mapped_addr] = data;
+    return true; /* cart has handled the adr */
+  }
+  return false;
 }
 
 bool Cartridge::ppuRead(uint16_t addr, uint8_t &data)
 {
-
+  uint32_t mapped_addr = 0;
+  if(pMapper->ppuMapRead(addr, mapped_addr))
+  {
+    data = vCHRmem[mapped_addr];
+    return true; /* cart has handled the adr */
+  }
+  return false;
 }
 
 bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
 {
-  
+  uint32_t mapped_addr = 0;
+  if(pMapper->ppuMapRead(addr, mapped_addr))
+  {
+    vCHRmem[mapped_addr] = data;
+    return true; /* cart has handled the adr */
+  }
+  return false;
 }
