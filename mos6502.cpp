@@ -46,15 +46,17 @@ void mos6502::clock()
   if(cycles==0)
   {
     opcode = read(pc);
+    SetFlag(U, true);
     pc++;
 
     cycles = lookup[opcode].cycles; /* required number of cycles */
-    (this->*lookup[opcode].addrmode)(); /* calls current address mode */
-    (this->*lookup[opcode].operate)(); /* calls current opcode */
+    uint8_t additional_cycle1 (this->*lookup[opcode].addrmode)(); /* calls current address mode */
+    uint8_t additional_cycle2 (this->*lookup[opcode].operate)(); /* calls current opcode */
 
     /* if adr and op need additional cycles, add cycles */
     cycles += (additional_cycle1 & additional_cycle2);
   }
+  
   cycles--;
 }
 
@@ -525,4 +527,53 @@ uint8_t mos6502::RTI() // Return from Interrupt
   pc |=. (uint16_t)read(0x0100 + stkP) << 8;
 
   return 0; /* no additional cycles */
+}
+
+uint8_t mos6502::BRK() // Break
+{
+  pc++;
+
+  SetFlag(I,1);
+  write(0x0100 + stkP, (pc >> 8) & 0x00FF);
+  stkP--;
+  write(0x0100 + stkP, pc & 0x00FF);
+  stkP--;
+
+  SetFlag(B,1);
+  write(0x0100 + stkP, status);
+  stkP--;
+  SetFlag(B,0);
+
+  pc = (uint16_t)read(0xFFFE) | ((uint16_t)read(0xFFFF) >> 8);
+  return 0;
+}
+
+uint8_t mos6502::CMP() // Compare Accumulator
+{
+  fetch();
+  temp = (uint16_t)a - (uint16_t)fetched;
+  SetFlag(C, a >= fetched;
+  SetFlag(Z, (temp & 0x00FF) == 0x0000);
+  SetFlag(N, temp & 0x0080);
+  return 1; /* ? additional cycles */
+}
+
+uint8_t mos6502::CPX() //  Compare X Register
+{
+  fetch();
+  temp = (uint16_t)x - (uint16_t)fetched;
+  SetFlag(C, x >= fetched;
+  SetFlag(Z, (temp & 0x00FF) == 0x0000);
+  SetFlag(N, temp & 0x0080);
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::CPX() //  Compare Y Register
+{
+  fetch();
+  temp = (uint16_t)y - (uint16_t)fetched;
+  SetFlag(C, y >= fetched;
+  SetFlag(Z, (temp & 0x00FF) == 0x0000);
+  SetFlag(N, temp & 0x0080);
+  return 0; /* no extra cycles */
 }

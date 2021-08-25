@@ -4,6 +4,7 @@
 
 #include "mos6502.h"
 #include "ppu2C02.h"
+#include "Cartridge.h"
 
 using namespace std;
 

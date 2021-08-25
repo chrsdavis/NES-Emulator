@@ -14,7 +14,20 @@ class Cartridge
     Cartridge(const string& sFileName); /* file path */
     ~Cartridge();
 
+  public:
+    bool ImageValid();
+
+    enum MIRROR
+    {
+      HORIZONTAL,
+      VERTICAL,
+      ONESCREEN_LOW,
+      ONESCREEN_HIGH,
+    } mirror = HORIZONTAL;
+
   private:
+    bool bImageValid = false;
+    
     vector<uint8_t> vPRGmem;
     vector<uint8_t> vCHRmem;
 

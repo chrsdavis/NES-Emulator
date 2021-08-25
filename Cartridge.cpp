@@ -120,3 +120,8 @@ bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
   }
   return false;
 }
+
+bool Cartridge::ImageValid()
+{
+  return bImageValid;
+}
