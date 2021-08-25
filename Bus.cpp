@@ -61,3 +61,16 @@ void Bus::reset()
   cpu.reset(); /* reset the cpu */
   sysClockCount = 0; /* reset clock count */
 }
+
+void Bus::clock()
+{
+  ppu.clock(); /* ppu clock is fastest */
+
+  /*cpu clock is 1/3 speed of ppu */
+  if(sysClockCount % 3 == 0)
+  {
+    cpu.clock();
+  }
+
+  sysClockCount++;
+}
