@@ -843,6 +843,8 @@ uint8_t mos6502::RTS() // Return from Subroutine
   return 0; /* no extra cycles necessary */
 }
 
+
+
 uint8_t mos6502::SEC() // Set Carry Flag
 {
   SetFlag(C, true);
@@ -895,10 +897,74 @@ uint8_t mos6502::TAY() // Transfer Accum. to X Reg.
   return 0;
 }
 
-uint8_t mos6502::TSX() // Transfer stk. pointer to X Reg.
+uint8_t mos6502::TSX() // Transfer Stk. Pointer to X Reg.
 {
   x = stkP;
   SetFlag(z, x == 0x00);
   SetFlag(N, x & 0x80);
+  return 0;
+}
+
+uint8_t mos6502::TXA() // Transfer X Reg. to Accum.
+{
+  a = x;
+  SetFlag(Z, a == 0x00);
+  SetFlag(N, a & 0x80);
+  return 0;
+}
+
+uint8_t mos6502::TXS() // Transfer X Reg. to Stk. Pointer
+{
+  stkP = x;
+  return 0;
+}
+
+uint8_t mos6502::TYA() // Transfer Y Reg. to Accum.
+{
+  a = y;
+  SetFlag(Z, a == 0x00);
+  SetFlag(N, a & 0x80);
+  return 0;
+}
+
+
+
+
+
+uint8_t mos6502::ASL() // Arithmetic Shift Left
+{
+  fetch();
+
+  /* shift all bits left */
+  temp = (uint16_t)fetched << 1;
+
+  /* bit 7 -> carry */
+  SetFlag(C, temp & 0xFF00) > 0);
+
+  SetFlag(Z, (temp & 0x00FF) == 0x00);
+  SetFlag(N, temp & 0x80);
+
+  if(lookup[opcode].addrmode == &mos6502::IMP)
+  {
+    a = temp & 0x00FF; /* implicit adr */
+  }else{
+    write(addr_abs, temp & 0x00FF); /* explicit adr */
+  }
+
+  return 0; /* no extra clock cycles */
+}
+
+uint8_t mos6502::BIT() // Bit test
+{
+  fetch();
+
+  /* kinda & it w/ accum., set Z to that */
+  temp = a & fetched;
+  SetFlag(Z, (temp & 0x00FF) == 0x00);
+  
+  /* N = 7th bit, V = 6th bit @ tested address */
+  SetFlag(N, fetched & (1 << 7));
+  SetFlag(V, fetched & (1 << 6));
+
   return 0;
 }
