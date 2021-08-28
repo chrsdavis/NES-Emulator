@@ -3,6 +3,7 @@
 mos6502::mos6502()
 {
   using a = mos6502;
+
   //lookup is a std::vector 
   //initializer list of initializer lists
   lookup = 
@@ -213,7 +214,8 @@ uint8_t mos6502::REL() //Relative
 
 uint8_t mos6502::fetch() //fetch memory
 {
-  if(!(lookup[opcode].addrmode == &mos6502::IMP)) /* if it's not implied addressing mode */
+  /* if it's not implied addressing mode */
+  if(!(lookup[opcode].addrmode == &mos6502::IMP)) 
     fetched = read(addr_abs);
   return fetched;
 }
@@ -568,7 +570,7 @@ uint8_t mos6502::CPX() //  Compare X Register
   return 0; /* no extra cycles */
 }
 
-uint8_t mos6502::CPX() //  Compare Y Register
+uint8_t mos6502::CPY() //  Compare Y Register
 {
   fetch();
   temp = (uint16_t)y - (uint16_t)fetched;
@@ -576,4 +578,327 @@ uint8_t mos6502::CPX() //  Compare Y Register
   SetFlag(Z, (temp & 0x00FF) == 0x0000);
   SetFlag(N, temp & 0x0080);
   return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::DEC() //  Decrement Value @ mem adr
+{
+  fetch();
+  twmp = fetched - 1;
+  write(addr_abs, temp & 0x00FF);
+
+  SetFlag(Z, (temp & 0x00FF) == 0x0000); /* if 1st page 0 */
+  SetFlag(N, temp &. 0x0080); /* neg. bit (last) */
+
+  return 0; /* no additional cycles taken */
+}
+
+uint8_t mos6502::DEX() // Decrement X Register 
+{
+  x--;
+  SetFlag(Z, x == 0x00); /* see if x is 0 */
+  SetFlag(N, x & 0x80); /* get neg. (7th) bit */
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::DEY() // Decrement Y Register 
+{
+  y--;
+  SetFlag(Z, y == 0x00); /* see if y = 0 */
+  SetFlag(N, y & 0x80); /* get final bit for N */
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::EOR() // Bitwise Logical XOR
+{
+  fetch();
+  a = a ^ fetched; /* default c++ bitwise xor */
+
+  SetFlag(Z, a == 0x00); /* test if zero */
+  SetFlag(N, a & 0x80); /* see if neg. */
+
+  return 1; /* can have extra clock cycles */
+}
+
+uint8_t mos6502::INC() // Increment Value @ mem adr
+{
+  fetch();
+  temp = fetched + 1;
+
+  write(addr_abs, temp & 0x00FF); /* write to adr */
+
+  SetFlag(Z, (temp & 0x00FF) == 0x0000); /* zero flag */
+  SetFlag(N, temp & 0x0080); /* neg. flag */
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::INX() // increment X register
+{
+  x++;
+
+  SetFlag(Z, x == 0x00); /* if x = 0, set flag */
+  SetFlag(N, x & 0x80); /* if x < 0, set flag */
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::INY() // increment Y register
+{
+  y++;
+
+  SetFlag(Z, y == 0x00); /* if x = 0, set flag */
+  SetFlag(N, y & 0x80); /* if x < 0, set flag */
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::JMP() // Jump to Location
+{
+  pc = addr_abs; /* current adr = new adr */
+
+  return 0; /* no additional clock cycles */
+}
+
+uint8_t mos6502::JSR() // Jump to Subroutine
+{
+  pc--; /* get top of stack */
+
+  /* push prog cntr to stack */
+  /* [0x0100 is start of stk] */
+  write(0x0100 + stkP, (pc >> 8) & 0x00FF);
+  stkP--;
+  write(0x0100 + stkP, pc & 0x00FF);
+  stkP--;
+
+  pc = addr_abs; /* current adr = new adr */
+  return 0;
+}
+
+uint8_t mos6502::LDA() // Load Accumulator
+{
+  fetch();
+  a = fetched;
+
+  SetFlag(Z, a == 0x00); /* 0 flag */
+  SetFlag(N, a & 0x80); /* neg. flag (last bit) */
+
+  return 1; /* can take extra cycles */
+}
+
+uint8_t mos6502::LDX() // Load X Register
+{
+  fetch();
+  x = fetched;
+
+  SetFlag(Z, x == 0x00); /* 0 flag */
+  SetFlag(N, x & 0x80); /* neg. flag (last bit) */
+
+  return 1; /* can take extra cycles */
+}
+
+uint8_t mos6502::LDY() // Load Y Register
+{
+  fetch();
+  y = fetched;
+
+  SetFlag(Z, y == 0x00); /* 0 flag */
+  SetFlag(N, y & 0x80); /* neg. flag (last bit) */
+
+  return 1; /* can take extra cycles */
+}
+
+uint8_t mos6502::LSR() // Logical Shift Right
+{
+  fetch();
+
+  /* 0th bit shifted to carry bit */
+  SetFlag(C, fetched & 0x0001); 
+  
+  /* shift all bits right */
+  temp = fetched >> 1;
+
+  SetFlag(Z, (temp & 0x00FF) == 0x0000); /* 0 flag */
+  SetFlag(N, temp & 0x080); /* negative flag */
+
+  /* if implied addresing mode */
+  if(lookup[opcode].addrmode == &mos6502::IMP)
+  {
+    a = temp & 0x00FF;
+  }else{ /*if not implied adr mode */
+    write(addr_abs, temp & 0x00FF);
+  }
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::NOP() // No Operation
+{
+  /* aka NOPE */
+  /* REMs code; rsrv space for future */
+  switch(opcode)
+  {
+    case 0x1C:
+    case 0x3C:
+    case 0x5C:
+    case 0x7C:
+    case 0xDC:
+    case 0xFC:
+      return 1;
+      break;
+  }
+  return 0;
+}
+
+uint8_t mos6502::ORA() // Bitwise Logical OR
+{
+  fetch();
+  a = a | fetched; /* vanilla c++ bitwise OR */
+
+  /* test/set zero and negative flags */
+  SetFlag(Z, a == 0x00);
+  SetFlag(N, a & 0x80);
+
+  return 1; /* no extra cycles */
+}
+
+uint8_t mos6502::PHP() // Push Processor Status to Stack
+{
+  /* 0x0100 is start of stack */
+  write(0x0100 + stkP, status | B | U);
+  SetFlag (B, 0); /* break flag */
+  SetFlag(U, 0); /* unused flag */
+  stkP--;
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::PLP() // Pop Processor Status from Stack
+{
+  stkP++; /* get top of stack */
+  status = read(0x0100 + stkP); /* stk head @ 0x0100 */
+  SetFlag(U, 1); /* unused flag */
+
+  return 0;
+}
+
+uint8_t mos6502::ROL() // Rotate Left
+{
+  /* shift all bits left */
+  fetch();
+  /* carry pushed to 0th bit */
+  temp = (uint16_t)(fetched << 1) | GetFlag(C);
+
+  SetFlag(C, temp & 0xFF00); /* carry = original 7th bit */
+  SetFlag(Z, (temp & 0x00FF) = 0x0000);
+  SetFlag(N, temp & 0x0080);
+
+  /* if implied addressing mode */
+  if(lookup[opcode].addrmode == &mos6502::IMP)
+  {
+    a = temp & 0x00FF;
+  }else{ /* if explicit addressing */
+    write(addr_abs, temp & 0x00FF);
+  }
+
+  return 0; /* no extra cycles */
+}
+
+uint8_t mos6502::ROR() // Rotate Right
+{
+  fetch();
+
+  /* shift all bits right */
+  /* carry -> bit 7, bit 0 -> carry */
+  temp = (uint16_t)(GetFlag(C) << 7) | (fetched >> 1);
+
+  SetFlag(C, fetched & 0x01); /* bit 0 -> carry */
+
+  /* zero and negative flags */
+  SetFlag(Z, (temp & 0x00FF) == 0x00);
+  SetFlag(N, temp & 0x0080);
+
+  if(lookup[opcode].addrmode == &mos6502::IMP)
+  {
+    a = temp & 0x00FF; /* implicit adr */
+  }else{
+    write(addr_abs, temp & 0x00FF); /* explicit adr */
+  }
+
+  return 0; /* no extra cycles needed */
+}
+
+uint8_t mos6502::RTS() // Return from Subroutine
+{
+  /* pull top two bytes off stack */
+  stkP++;
+  pc = (uint16_t)read(0x0100 + stkP);
+  stkP++;
+  pc |= (uint16_t)read(0x0100 + stkP) << 8;
+
+  /* puts pc at address+1, after popping subr. */
+  pc++;
+
+  return 0; /* no extra cycles necessary */
+}
+
+uint8_t mos6502::SEC() // Set Carry Flag
+{
+  SetFlag(C, true);
+  return 0;
+}
+
+uint8_t mos6502::SED() // Set Decimal Flag
+{
+  SetFlag(D, true);
+  return 0;
+}
+
+uint8_t mos6502::SEI() // Set Interrupt Flag
+{
+  SetFlag(I, true);
+  return 0;
+}
+
+uint8_t mos6502::STA() // Store Accumulator at Address
+{
+  write(addr_abs, a);
+  return 0;
+}
+
+uint8_t mos6502::STX() // Store X Register at Address
+{
+  write(addr_abs, x);
+  return 0;
+}
+
+uint8_t mos6502::STY() // Store Y Register at Address
+{
+  write(addr_abs, y);
+  return 0;
+}
+
+uint8_t mos6502::TAX() // Transfer Accum. to X Reg.
+{
+  x = a;
+  SetFlag(Z, x == 0x00);
+  SetFlag(N, x & 0x80);
+  return 0;
+}
+
+uint8_t mos6502::TAY() // Transfer Accum. to X Reg.
+{
+  y = a;
+  SetFlag(Z, y == 0x00);
+  SetFlag(N, y & 0x80);
+  return 0;
+}
+
+uint8_t mos6502::TSX() // Transfer stk. pointer to X Reg.
+{
+  x = stkP;
+  SetFlag(z, x == 0x00);
+  SetFlag(N, x & 0x80);
+  return 0;
 }

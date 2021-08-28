@@ -82,7 +82,7 @@ class mos6502
     uint8_t read(uint16_t a);  /* cpu read */
     void write(uint16_t a, uint8_t d); /* cpu write */
 
-    /* Status Register access functions */
+    /* Processor Status Register access functions */
     uint8_t GetFlag(FLAGS6502 f);
     void    SetFlag(FLAGS6502 f, bool v);
 
