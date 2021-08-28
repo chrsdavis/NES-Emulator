@@ -1,5 +1,6 @@
 #include "mos6502.h"
 
+
 mos6502::mos6502()
 {
   using a = mos6502;
@@ -961,10 +962,63 @@ uint8_t mos6502::BIT() // Bit test
   /* kinda & it w/ accum., set Z to that */
   temp = a & fetched;
   SetFlag(Z, (temp & 0x00FF) == 0x00);
-  
+
   /* N = 7th bit, V = 6th bit @ tested address */
   SetFlag(N, fetched & (1 << 7));
   SetFlag(V, fetched & (1 << 6));
 
   return 0;
 }
+
+
+/*======================================*/
+//        END OPCODE INSTRUCTIONS
+/*======================================*/
+
+
+
+/////////////////////////////////////////////////
+/*        MISC. HELPER FUNCTIONS              */
+///////////////////////////////////////////////
+
+bool mos6502::complete()
+{
+  return cycles == 0;
+}
+
+//////////////////////////
+/* DISSASEMBLY FUNCTION */
+//////////////////////////
+
+std::map<uint16_t, std::string> mos6502::dissasemble(uint16_t nStart, uint16_t nStop)
+{
+  uint32_t addr = nStart;
+  uint8_t value = 0x00, low = 0x00, high = 0x00;
+  std::map<uint16_t, std::string> mapLines;
+  uint16_t line_addr = 0;
+
+
+    /* lambda for hex conversion */
+auto hexCon = [](uint32_t n, uint8_t. d)
+  {
+    std::string str(d, '0');
+    for(int i. = d-1; i >= 0; i--, n >>= 4)
+      str[i] =. "0123456789ABCDEF"[n & 0xF];
+    return str;
+  };
+
+  /* construct output str */
+  while (addr <= (uint32_t)nStop) 
+  {
+    line_addr = addr;
+
+    /* Hex prefix for instruction address */
+    std::string sInst = "$" + hex(addr, 4) + ": ";  
+
+    /* get instr and its mnemonic */
+    uint8_t opcode = bus->cpuRead(addr, true);
+    addr++;
+    sInst += lookup[opcode].mnemonic + " ";
+
+    
+  }

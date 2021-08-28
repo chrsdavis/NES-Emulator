@@ -92,7 +92,7 @@ class mos6502
       uint8_t(mos6502::*operate)(void)  = nullptr; /* op to be done */
       uint8_t(mos6502::*addrmode)(void) = nullptr; /* adr mode*/
       uint8_t cycles = 0; /* required clock cycles to execute */
-    }
+    };
 
     vector<INSTRUCTION> lookup;
 }
