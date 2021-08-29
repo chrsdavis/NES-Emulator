@@ -1020,5 +1020,25 @@ auto hexCon = [](uint32_t n, uint8_t. d)
     addr++;
     sInst += lookup[opcode].mnemonic + " ";
 
-    
+    /* Retrieve Addressing Modes/Instructions */
+
+    // (Need to make into switch statement) //
+    if(lookup[opcode].addrmode == &mos6502::IMP)
+    {
+      sInst += " {IMP}";
+    }else if(lookup[opcode].addrmode == &mos6502::IMM)
+    {
+      value = bus->cpuRead(addr, true);
+      addr++;
+      sInst += "#$" + hexCon(value, 2) + " {IMM}";
+    }else if(lookup[opcode].addrmode == &mos6502::ZP0)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = 0x00;
+      Sinst += "$" + hexCon(low, 2) + " {ZP0}";
+    }else if(lookup[opcode].addrmode == &mos6502::ZPX)
+    {
+
+    }
   }
