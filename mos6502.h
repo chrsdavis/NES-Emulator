@@ -33,16 +33,21 @@ class mos6502
 
     void connectBus(Bus *b) {bus = b;}
 
+    bool complete();
+
+    /* dissasemble function for human-readable output */
+    std::map<uint16_t, std::string> dissasemble(uint16_t nStart, uint16_t nStop);
+
 
     /* ADDRESSING MODES */
-
+  private:
     uint8_t IMP();  uint8_t IMM();  uint8_t ABS();  uint8_t ABX();
     uint8_t ZP0();  uint8_t ZPX();  uint8_t ABY();  uint8_t IND();
     uint8_t ZPY();  uint8_t REL();  uint8_t IZX();  uint8_t IZY();
 
 
     /* OPCODES */
-
+  private:
     uint8_t ADC();	uint8_t AND();	uint8_t ASL();	uint8_t BCC();
 	  uint8_t BCS();	uint8_t BEQ();	uint8_t BIT();	uint8_t BMI();
 	  uint8_t BNE();	uint8_t BPL();	uint8_t BRK();	uint8_t BVC();
@@ -62,12 +67,13 @@ class mos6502
 
 
     /* CLOCK & UTILITY */
-
+  public:
     void clock();
     void reset();
     void irq(); /* Interruptable Request Signal */
     void nmi(); /* Non-Maskable IRQ */
 
+  private:
     uint8_t fetch();
     uint8_t fetched() = 0x00;
 
@@ -75,6 +81,8 @@ class mos6502
     uint16_t addr_rel = 0x0000;
     uint8_t opcode = 0x00;
     uint8_t cycles = 0; /* cycles remaining on instruction */
+    
+    uint16_t temp = 0x0000; /* multipurpose var */
 
 
   private:
@@ -89,8 +97,8 @@ class mos6502
     struct INSTRUCTION
     {
       string mnemonic; //name
-      uint8_t(mos6502::*operate)(void)  = nullptr; /* op to be done */
-      uint8_t(mos6502::*addrmode)(void) = nullptr; /* adr mode*/
+      uint8_t (mos6502::*operate)(void)  = nullptr; /* op to be done */
+      uint8_t (mos6502::*addrmode)(void) = nullptr; /* adr mode*/
       uint8_t cycles = 0; /* required clock cycles to execute */
     };
 
