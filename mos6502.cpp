@@ -1039,6 +1039,68 @@ auto hexCon = [](uint32_t n, uint8_t. d)
       Sinst += "$" + hexCon(low, 2) + " {ZP0}";
     }else if(lookup[opcode].addrmode == &mos6502::ZPX)
     {
-
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = 0x00;
+      sInst += "$" + hexCon(low, 2) + ", X {ZPX}";
+    }else if(lookup[opcode].addrmode == &mos6502::ZPY)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = 0x00;
+      sInst += "$" + hexCon(low, 2) + ", Y {ZPY}";
+    }else if(lookup[opcode].addrmode == &mos6502::IZX)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = 0x00;
+      sInst += "($" + hexCon(low, 2) + ", X {IZX}";
+    }else if(lookup[opcode].addrmode == &mos6502::IZY)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = 0x00;
+      sInst += "($" + hexCon(low, 2) + "), Y {IZY}";
+    }else if(lookup[opcode].addrmode == &mos6502::ABS)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = bus->cpuRead(addr, true);
+      addr++;
+      sInst += "$" + hexCon((uint16_t)(hi << 8) | low, 4) + " {ABS}";
+    }else if(lookup[opcode].addrmode == &mos6502::ABX)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = bus->cpuRead(addr, true);
+      addr++;
+      sInst += "$" + hexCon((uint16_t)(hi << 8) | lo, 4) + ", X {ABX}";
+    }else if(lookup[opcode].addrmode == &mos6502::ABY)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = bus->cpuRead(addr, true);
+      addr++;
+      sInst += "$" + hexCon((uint16_t)(high << 8) | low, 4) + ", Y {ABY}";
+    }else if(lookup[opcode].addrmode == &mos6502::IND)
+    {
+      low = bus->cpuRead(addr, true);
+      addr++;
+      high = bus-> cpuRead(addr, true);
+      addr++;
+      sInst += "($" + hexCon((uint16_t)(hi << 8) | low, 4) + ") {IND}";
+    }else if(lookup[opcode].addrmode == &mos6502::REL)
+    {
+      value = bus-> cpuRead(addr, true);
+      addr++;
+      sInst += "$" + hexCon(value, 2) + " [$" + hexCon(addr + (int8_t)value, 4) + "] {REL}";
     }
+
+    /* add concatonated display str to hashmap */
+    /* instruction addr is key */
+
+    mapLines[line_addr] = sInst;
   }
+
+  return mapLines;
+}
