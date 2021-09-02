@@ -374,35 +374,73 @@ void ppu2C02::ppuWrite(uint16_t addr, uint8_t data)
         nameTable[0][addr & 0x03FF] = data;
 
       if(addr >= 0x0400 && addr <= 0x07FF)
-        data = nameTable[1][addr & 0x03FF];
+        nameTable[1][addr & 0x03FF] = data;
 
       if(addr >= 0x0800 && addr <= 0x0BFF)
-        data = nameTable[0][addr & 0x03FF];
+        nameTable[0][addr & 0x03FF] = data;
 
       if(addr >= 0x0C00 && addr <= 0x0FFF)
-        data = nameTable[1][addr & 0x03FF];
+        nameTable[1][addr & 0x03FF] = data;
     }else
     if(cart->mirror == Cartridge::MIRROR::HORIZONTAL)
     {
       /* Horizontal */
       if(addr >= 0x0000 && addr <= 0x03FF)
-        data = nameTable[0][addr & 0x03FF];
+        nameTable[0][addr & 0x03FF] = data;
 
       if(addr >= 0x0400 && addr <= 0x07FF)
-        data = nameTable[0][addr & 0x03FF];
+        nameTable[0][addr & 0x03FF] = data;
 
       if(addr >= 0x0800 && addr <= 0x0BFF)
-        data = nameTable[1][addr & 0x03FF];
+        nameTable[1][addr & 0x03FF] = data;
 
       if(addr >= 0x0C00 && addr <= 0x0FFF)
-        data = nameTable[1][addr & 0x03FF];
+        nameTable[1][addr & 0x03FF] = data;
     }
+  }else
+  if(addr >= 0x3F00 && addr <= 0x3FFF)
+  {
+    addr &= 0x001F;
+    // (make switch)
+    if(addr == 0x0010) addr = 0x0000;
+    if(addr == 0x0014) addr = 0x0004;
+    if(addr == 0x0018) addr = 0x0008;
+    if(addr == 0x001C) addr = 0x000C;
+
+    paletteTable[addr] = data;
   }
 }
 
 void ppu2C02::ConnectCartridge(const shared_ptr<Cartridge>& cartridge)
 {
   this->cart = cartridge;
+}
+
+void ppu2C02::reset()
+{
+  fine_x          = 0x00;
+  address_latch   = 0x00;
+  ppu_data_buffer = 0x00;
+
+  scanline = 0;
+  cycle    = 0;
+
+  bg_next_tile_id     = 0x00;
+  bg_next_tile_attrib = 0x00;
+  bg_next_tile_lsb    = 0x00;
+  bg_next_tile_msb    = 0x00;
+  
+  bg_shifter_pattern_low  = 0x0000;
+  bg_shifter_pattern_high = 0x0000;
+  bg_shifter_attrib_low   = 0x0000l
+  bg_shifter_attrib_high  = 0x0000;
+
+  status.reg  = 0x00;
+  mask.reg    = 0x00;
+  control.reg = 0x00;
+
+  vram_addr.reg = 0x0000;
+  tram_addr.reg = 0x0000;
 }
 
 void ppu2C02::clock()
