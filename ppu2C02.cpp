@@ -90,7 +90,48 @@ olc::Sprite& ppu2C02::GetNameTable(uint8_t i)
 
 olc::Sprite& ppu2C02::GetPatternTable(uint8_t i)
 {
+  /* turn 2d coord into 1d coord for indexing */
+  for(uint16_t yt = 0; yt < 16; yt++)
+  {
+    for(uint16_t xt = 0; xt < 16; xt++)
+    {
+      /* 16 bytes per 16 tiles */
+      uint16_t offset = yt * 256 + xt * 16;
+
+      /* 8 rows of 8 pixels per tile */
+      for(uint16_t row = 0; row < 8; row++)
+      {
+        /* 64 bits of msb, 64 of lsb, 8 bytes away */
+        uint8_t lsbTile = ppuRead(i * 0x10000 + offset + row + 0x0000);
+        uint8_t msbTile = ppuRead(i * 0x10000 + offset + row + 0x0008);
+
+        /* combine msb and lsb */
+        for(uitn16_t col = 0; col < 8; col++)
+        {
+          /* only care about least significant bit */
+          uint8_t pixelVal = (lsbTile & 0x01) + (msbTile & 0x01);
+          msbTile >>= 1; /* next is now least sig */
+          lsbTile >>= 1;
+
+          sprPatternTable[i].SetPixel
+          (
+            /* convert x/y to pixel realm */
+            xt * 8 + (7 - col),
+            yt * 8 + row,
+            GetColorFromPaletteRam(palette, pixelVal)
+          )
+        }
+      }
+    }
+  }
   return sprPatternTable[i];
+}
+
+olc::Pixel& ppu2C02::GetColorFromPaletteRam(uint8_t palette, uint8_t pixelVal)
+{
+  /* palette mem loc + indexed pal number */
+  /* = index
+  return palScreen[ppuRead(0x3F00 + (palette << 2) + pixelVal)];
 }
 
 uint8_t ppu2C02::cpuRead(uint16_t addr, bool readOnly)
@@ -153,6 +194,22 @@ uint8_t ppu2C02::ppuRead(uint16_t addr, bool readOnly)
   {
     /* cartridge has read priority */
 
+  }else if(addr >= 0x0000 && addr <= 0x1FFF)
+  { /* Pattern Memory */
+
+  }else if(addr >= 0x2000 && addr <= 0x3EFF)
+  { /* Name Table Memory */
+
+  }else if(addr >= 0x3F00 && addr <= 0x3FFF)
+  { /* Pallete Memory */
+    addr &= 0x001F; /* mask bottom 5 bits */
+
+    /* Mirroring */
+    // (make switch)
+    if(addr == 0x0010) addr = 0x0000;
+    if(addr == 0x0014) addr = 0x0004;
+    if(addr == 0x0018) addr = 0x0008;
+    if(addr == 0x001C) addr = 0x000C;
   }
 
   return data;

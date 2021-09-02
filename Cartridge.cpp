@@ -1,6 +1,5 @@
 #include "Cartridge.h"
 
-using namespace std;
 
 Cartridge::Cartridge(const string& sFileName) 
 {
@@ -18,9 +17,11 @@ Cartridge::Cartridge(const string& sFileName)
     char unused[5];
   } header; /* create header */
 
+  bImageValid = false;
+
   /* open file in binary */
-  ifstream ifs;
-  ifs.open(sFileName, ifstream::binary);
+  std::ifstream ifs;
+  std::ifs.open(sFileName, ifstream::binary);
 
   if(ifs.is_open())
   {

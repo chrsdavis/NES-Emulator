@@ -18,9 +18,9 @@ class Bus
   mos6502 cpu;
   ppu2C02 ppu;
 
-  array<uint8_t, 2048> ramCPU; //fake ram
-
-  shared_ptr<Cartridge> cart; //game cartridge
+  shared_ptr<Cartridge> cart; /* game cartridge */
+  uint8_t cpuRAM[2048]; /* 2kb of ram */
+  uint8_t controller[2]; /* controllers */
 
   public: /* Bus read write */
   void cpuWrite(uint16_t addr, uint8_t data);
@@ -28,10 +28,13 @@ class Bus
 
   public: /* system interface */
   void insertCartridge(const shared_ptr<Cartridge>& cartridge);
-  void reset();
+  void reset(); /* resets entire system */
   void clock(); /* system tick */
 
   private:
   /* counts # of clock cycles that have passed */
   uint32_t sysClockCount = 0;
+
+  /* internal cache of controller */
+  uint8_t controller_state[2];
 };
