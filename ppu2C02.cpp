@@ -418,6 +418,8 @@ void ppu2C02::ConnectCartridge(const shared_ptr<Cartridge>& cartridge)
 
 void ppu2C02::reset()
 {
+  /* Reset everything to known value */
+  
   fine_x          = 0x00;
   address_latch   = 0x00;
   ppu_data_buffer = 0x00;
