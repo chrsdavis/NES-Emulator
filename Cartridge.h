@@ -6,12 +6,11 @@
 
 #include "Mapper_000.h"
 
-using namespace std;
 
 class Cartridge
 {
   public:
-    Cartridge(const string& sFileName); /* file path */
+    Cartridge(const std::string& sFileName); /* file path */
     ~Cartridge();
 
   public:
@@ -47,4 +46,7 @@ class Cartridge
     /* PPU Bus */
     bool ppuRead(uint16_t addr, uint8_t &data);
     bool ppuWrite(uint16_t addr, uint8_t data);
+
+  public:
+    void reset();
 };

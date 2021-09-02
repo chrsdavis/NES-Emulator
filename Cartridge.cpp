@@ -35,6 +35,8 @@ Cartridge::Cartridge(const string& sFileName)
     /* Find which mapper rom uses */
     nMapperID = ((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4);
 
+    mirror = (header.mapper1 & 0x01) ? VERTICAL : HORIZONTAL;
+
     /* get file format */
     uint8_t nFileType = 1; /* only care about type 1 */
 
@@ -63,11 +65,12 @@ Cartridge::Cartridge(const string& sFileName)
     switch(nMapperID)
     {
       case 0: 
-        mapper_ptr = make_shared<Mapper_000>(nPRGBanks, nCHRBanks);
+        mapper_ptr = std::make_shared<Mapper_000>(nPRGBanks, nCHRBanks);
         break;
       
     }
   
+    bImageValid = true;
     ifs.close();
     
   }
@@ -125,4 +128,11 @@ bool Cartridge::ppuWrite(uint16_t addr, uint8_t data)
 bool Cartridge::ImageValid()
 {
   return bImageValid;
+}
+
+void Cartridge::reset()
+{
+  /* resets only mapper, not ROM */
+  if(pMapper != nullptr)
+    pMapper->reset();
 }

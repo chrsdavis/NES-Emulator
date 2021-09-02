@@ -33,6 +33,8 @@ mos6502::~mos6502()
 
 }
 
+/* BUS CONNECTIONS */
+
 uint8_t mos6502::read(uint16_t a) /* cpu read */
 {
   return bus->cpuRead(a,false); /* return bus' read (adr,flag)*/

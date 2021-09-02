@@ -1,5 +1,9 @@
 //#pragma once
-using namespace std;
+
+#include <vector>
+
+#include<string> /* for dissasembly */
+#include <map>
 
 class Bus;
 
