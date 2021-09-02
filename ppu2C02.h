@@ -21,7 +21,7 @@ class ppu2C02
     uint8_t patternTable[2][4096]; /* on cartridge */
 
   private:
-    olc::Pixel  palScreen[0x40];
+    olc::Pixel  palScreen[0x40]; /* all 64 pixels */
 	  olc::Sprite sprScreen = olc::Sprite(256, 240);
 	  olc::Sprite sprNameTable[2] = {olc::Sprite(256, 240), olc::Sprite(256, 240)};
 	  olc::Sprite sprPatternTable[2] = {olc::Sprite(128, 128), olc::Sprite(128, 128)};
