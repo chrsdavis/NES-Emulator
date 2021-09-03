@@ -516,7 +516,7 @@ void ppu2C02::clock()
   }
 }
 
-auto TransferAddressX = [&]()
+  auto TransferAddressY = [&]() 
   {
     /* almost the same as x */
 
@@ -530,4 +530,17 @@ auto TransferAddressX = [&]()
       vram_addr.coarsee_x = tram_addr.coarse_x;
     }
   }
+
+auto LoadBackgroundShifters = [&]() {
+    /* get next 8 pixels ready */
+    bg_shifter_pattern_low = (bg_shifter_pattern_low & 0xFF00) | bg_next_tile_lsb;
+    bg_shifter_pattern_high = (bg_shifter_pattern_high & 0xFF00) | bg_next_tile_msb;
+
+    /* attributes only change every 8 pixels */
+    /* make bottom 2 bits into 8 bits */
+    bg_shifter_attrib_low = (bg_shifter_attrib_low & 0xFF00) | ((bg_next_tile_attrib & 0b01) ? 0xFF : 0x00);
+    bg_shifter_attrib_high = (bg_shifter_attrib_high & 0xFF00) | ((bg_next_tile_attrib & 0b10) ? 0xFF :   0x00);
+  };
+
+  
 }
