@@ -419,7 +419,7 @@ void ppu2C02::ConnectCartridge(const shared_ptr<Cartridge>& cartridge)
 void ppu2C02::reset()
 {
   /* Reset everything to known value */
-  
+
   fine_x          = 0x00;
   address_latch   = 0x00;
   ppu_data_buffer = 0x00;
@@ -447,19 +447,87 @@ void ppu2C02::reset()
 
 void ppu2C02::clock()
 {
-  /* random white noise */
-  sprScreen.SetPixel(cycle-1, scanline, palScreen[(rand()%2) ? 0x3F : 0x30]);
+  //////////////////////////////////////////
+            /* LAMBDA FUNCTIONS */
+  //////////////////////////////////////////
 
-  /* progress renderer */
-  cycle++;
-  if(cycle >= 341)
-  {
-    cycle = 0;
-    scanline++;
-    if(scanline >= 261)
+  auto IncrementScrollX = [&]() {
+    /* scroll horizontally 1 tile */
+    /* macroscopic scrolling */
+
+    /* if it should render */
+    if (mask.render_background || mask.render_sprites)
     {
-      scanline = -1;
-      frame_complete = true;
+      /* name table is 32x30 tiles */
+      if(vram_addr.coarse_x == 31)
+      {
+        /* wrap around */
+        vram_addr.coarse_x = 0;
+        vram_addr.nametable_x = ~vram_addr.nameetable_x;
+      }else{
+        /* in the same table */
+        vram_addr.coarse_x++;
+      }
+    }
+  };
+
+  auto IncrementScrollY = [&]() {
+    /* increment 1 scanline (vertical) */
+
+    /* check if rendering is on */
+    if(mask.render_background || mask.render_sprites)
+    {
+      /* if increment is microscopic only */
+      if(vram_addr.fine_y < 7)
+      {
+        vram_addr.fine_y++;
+      }else{
+        /* increment over height of row */
+        vram_addr.fine_y = 0;
+
+        /* if need to swap vert nametables */
+        if(vram_addr.coarse_y == 29)
+        {
+          vram_addr.coarse_y = 0;
+
+          /* flip target bit */
+          vram_addr.nametable_y = ~vram_addr.nametable_y;
+        }else if(vram_addr.coarse_y == 31)
+        {
+          vram_addr.coarse_y = 0;
+        }else{
+          /* if no wrapping needed */
+          vram_addr.coarse_y++;
+        }
+      }
+    }
+  };
+
+  auto TransferAddressX = [&]()
+  {
+    /* transfer temp horiz nametable to pseudo-ptr*/
+
+    /* check if render enabled */
+    if(mask.render_background || mask.render_sprites)
+    {
+      vram_addr.nametable_x = tram_addr.nametable_x;
+      vram_addr.coarsee_x = tram_addr.coarse_x;
+    }
+  }
+}
+
+auto TransferAddressX = [&]()
+  {
+    /* almost the same as x */
+
+    /* check if render enabled */
+    if(mask.render_background || mask.render_sprites)
+    {
+      /* fine y is part of pseudo-ptr */
+      vram_addr.fine_y = tram_addr.fine_y;
+
+      vram_addr.nametable_x = tram_addr.nametable_x;
+      vram_addr.coarsee_x = tram_addr.coarse_x;
     }
   }
 }
