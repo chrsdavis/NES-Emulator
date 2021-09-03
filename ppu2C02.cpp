@@ -641,8 +641,93 @@ auto LoadBackgroundShifters = [&]() {
       }
     }
 
-    
+    /* end of a (visible) scanline */
+    /* [MAKE SWITCH STATEMENT] */
+    if(cycle == 256)
+    {
+      IncrementScrollY();
+    }
 
+    if(cycle == 257)
+    {
+      /* reset x */
+      LoadBackgroundShifters();
+      TransferAddressX();
+    }
+
+    if(cycle == 338 || cycle == 340)
+    {
+      bg_next_tile_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
+    }
+
+    if(scanline == -1 && cycle >= 280 && cycle < 305)
+    {
+      /* end of VB period, reset y adr */
+      TransferAddressY();
+    }
+
+  }
+
+  if(scanline == 240)
+  {
+    /* (Post-render) */
+  }
+
+  if(scanline >= 241 && scanline < 261)
+  {
+    if(scanline == 241 && cycle == 1)
+    {
+      /* end of frame, set VB flag */
+      status.vertical_blank = 1;
+
+      /* let cpu know if it's safe to operate on ppu */
+      if(control.enable_nmi)
+        nmi = true;
+    }
+  }
+
+  /* all pixel information for cycle has been fetched */
+
+
+  /* Get palette and pixel */
+  uint8_t bg_pixel = 0x00; /* pixel to be render */
+  uint8_t bg_palette = 0x00; /* pixel palette index */
+
+  /* if bkgnd render is legal */
+  if(mask.render_background)
+  {
+    /* shift bkgnd by x offset */
+    uint16_t bit_mux = 0x8000 >> fine_x;
+
+    /* Pix planes */
+    uint8_t p0_pixel = (bg_shifter_pattern_low low & bit_mux) > 0;
+    uint8_t p1_pixel = (bg_shifter_patterj_high & bit_mux) > 0;
+
+    /* pixel index */
+    bg_pixel = (p1_pixel << 1) | p0_pixel;
+
+    /* palette (same math as pixels) */
+    uint8_t bg_pal0 = (bg_shifter_attrib_low & bit_mux) > 0;
+    uint8_t bg_pal1 = (bg_shifter_attrib_high & bit_mux) > 0;
+    bg_palette = (bg_pal1 << 1) | bg_pal0;
+
+  }
+
+  /* draw background */
+  sprScreen.SetPixel(cycle - 1, scanline, GetColorFromPaletteRam(bg_palette, bg_pixel));
+
+
+  /* Progress the renderer */
+  cycle++;
+  if(cycle >= 341)
+  {
+    cycle = 0;
+    scanline++;
+    if(scanline >= 261)
+    {
+      scanline = -1;
+      frame_complete = true;
+    }
   }
 
 }
