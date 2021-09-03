@@ -542,5 +542,107 @@ auto LoadBackgroundShifters = [&]() {
     bg_shifter_attrib_high = (bg_shifter_attrib_high & 0xFF00) | ((bg_next_tile_attrib & 0b10) ? 0xFF :   0x00);
   };
 
-  
+  auto UpdateShifters = [&]() {
+    /* shift shifters by 1 bit */
+    if(mask.render_background)
+    {
+      /* shift bkgrd tile row */
+      bg_shifter_pattern_low  <<= 1;
+      bg_shifter_pattern_high <<= 1;
+
+      /* shift attributes */
+      bg_shifter_attrib_low  <<= 1;
+      bg_shifter_attrib_high <<= 1;
+    }
+  };
+
+  //////////////////////////////////////////
+          /* SCANLINE CYCLES */
+  //////////////////////////////////////////
+
+  /* 1 scanline is not visible (pre-render) */
+  /* @ -1, configures shifters */
+
+  /* if it's a valid scanline */
+  if(scanline >= -1 && scanline < 240)
+  {
+    if(scanline == 0 && cycle== 0)
+    {
+      /* cycle skip odd frame */
+      cycle = 1;
+    }
+
+    if(scanline == -1 && cycle == 1)
+    {
+      /* new frame, clear VB flag */
+      status.vertical_blank = 0;
+    }
+
+    if((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338))
+    {
+      UpdateShifters();
+
+      /* shifters are pre-loaded @ end of scanline */
+
+      /* ("skip" odd frames) */
+      /* 8-frame cycle for attributes */
+      switch((cycle-1) % 8)
+      {
+        case 0:
+          LoadBackgroundShifters();
+
+          /* get next tile id */
+          /* offset into nametable space */
+          bg_next_tile_id = ppuRead(0x2000 | (vram_addr.reg & 0x0FFF));
+          break;
+        
+        case 2:
+          /* retrieve new tile attrib */
+          bg_next_tile_attrib = ppuRead(0x23C0 | (vram_addr.nametable_y << 11)
+          | (vram_addr.nametable_x << 10)
+          | ((vram_addr.coarse_y >> 2) << 3)
+          | (vram_addr.coarse_x >> 2));
+
+          /* make bottom two bits of attr palette */
+          if(vram_addr.coarse_y & 0x02)
+            bg_next_tile_attrib >>= 4;
+
+          if(vram_addr.coarse_x & 0x02)
+            bg_next_tile_attrib >>= 2;
+
+          break;
+
+        case 4:
+          /* find correct sprite in pattern mem */
+          bg_next_tile_lsb = ppuRead((control.pattern_background << 12) + ((uint16_t)bg_next_tile_id << 4) + (vram_addr.fine_y) + 0);
+
+          /* control.pattern_background << 12 */
+            // selects pattern mem from control
+
+          /* (uint16_t)bg_next_tile_id << 4 */
+            // tile id * 16, 2 sets of 8 rows of 8bit pixels
+
+          /* vram_addr.fine_y */
+            // row offset from vert scroll
+
+          break;
+
+          case 6:
+            /* get next MSB */
+            /* exact same as 4, but offset by a byte */
+            bg_next_tile_lsb = ppuRead((control.pattern_background << 12) + ((uint16_t)bg_next_tile_id << 4) + (vram_addr.fine_y) + 0);
+
+            break;
+
+          case 7:
+            /* increment tile pseudo-ptr to next */
+            IncrementScrollX();
+            break;
+      }
+    }
+
+    
+
+  }
+
 }
