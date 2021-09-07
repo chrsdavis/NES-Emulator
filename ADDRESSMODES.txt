@@ -1,5 +1,0 @@
-IMP | implied | No data as part of instruction; doesn't need to do anything. Could be operating on the accumulator.
-
-IMM | Immediate | Data is supplied as part of instruction; data is in next byte.
-
-ZP0 | Zero Page Addressing | Needed byte is on page 0 of memory
