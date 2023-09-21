@@ -1,2 +1,2 @@
 # NES-Emulator
-An emulator for the Nintendo Entertainment System in C++
+An instruction-accurate emulator for the Nintendo Entertainment System in C++
